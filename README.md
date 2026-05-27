@@ -41,7 +41,7 @@ This project provides a simple pipeline for segmenting lumen cavities from 3D `.
    Example slice of lumens after placing 1 positive point in the left lumen and 3 positive points in the right lumen:  
     <img width="2170" height="1300" alt="Screenshot 2025-11-09 154239" src="https://github.com/user-attachments/assets/6cb73586-c863-48ef-894d-ae22b20a1ba2" />
 
-11. Go to File > Save Selected Layer(s) and choose the Labels layer.
+11. Go to File > Save Selected Layer(s) and choose the Labels layer, which will export a tif file.
 
 
 ## Outer lumen wall segmentation (with Napari/nnInteractive)
@@ -54,7 +54,7 @@ The setup and workflow are the same as the Inner cavity segmentation section, wi
 - Note: Napari may crash after 3+ lumens. If it happens, just save and reopen the tif before continuing.
 <img width="2154" height="1380" alt="image" src="https://github.com/user-attachments/assets/bee96b17-602b-4245-9c67-22b227256a71" />
 
-## Ellipse fitting
+## Ellipsoid fitting
 1. Move all files outputted from the previous step to be in this file structure, where each file has its own folder and for n lumens, there are n + 1 files. Ensure that the file containing the segmented inner cavities includes the string "inner_labels" in the name. <img width="784" height="311" alt="Screenshot 2025-11-12 at 2 28 25 PM" src="https://github.com/user-attachments/assets/c4fac917-5910-42bd-aa61-dc54f354a446" />
 
 2. Set up Python virtual environment by running these commands in the Terminal (only need to do this once)
@@ -66,7 +66,7 @@ The setup and workflow are the same as the Inner cavity segmentation section, wi
    pip install tifffile pandas numpy scipy scikit-image matplotlib h5py pyvista trimesh pymeshfix napari "PyQt5"
    ```
 
-3. Export the segmentation directory
+3. Export the segmentation directory (optional if code is changed to include correct directory pointing towards segmented tif files)
    ```
    export SEGMENTATION_DIR="..."
    ```
@@ -79,6 +79,11 @@ The setup and workflow are the same as the Inner cavity segmentation section, wi
 
 Note: the output is a csv file with one row each lumen and columns representing the parameters for both the inner and outer ellipsoid
    
+## Analysis
+1. Move day 2, day 3, day 4 CSV outputs of fit-ellipsoids.py into a folder (some example data is stored at fake_data in this repository)
+2. Run the Jupyter Notebook data-analysis.ipynb, results will be stored in plots/fake_data_plots.pdf
+
+
 ---
 ## [deprecated] Outer lumen wall segmentation (with thresholding) - alternative to Napari
 1. Export the path to the raw image
