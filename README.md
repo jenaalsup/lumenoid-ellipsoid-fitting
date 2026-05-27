@@ -57,18 +57,27 @@ The setup and workflow are the same as the Inner cavity segmentation section, wi
 ## Ellipse fitting
 1. Move all files outputted from the previous step to be in this file structure, where each file has its own folder and for n lumens, there are n + 1 files. Ensure that the file containing the segmented inner cavities includes the string "inner_labels" in the name. <img width="784" height="311" alt="Screenshot 2025-11-12 at 2 28 25 PM" src="https://github.com/user-attachments/assets/c4fac917-5910-42bd-aa61-dc54f354a446" />
 
-2. Export the segmentation directory
+2. Set up Python virtual environment by running these commands in the Terminal (only need to do this once)
+   ```
+   python3 -m venv venv
+
+   source venv/bin/activate
+
+   pip install tifffile pandas numpy scipy scikit-image matplotlib h5py pyvista trimesh pymeshfix napari "PyQt5"
+   ```
+
+3. Export the segmentation directory
    ```
    export SEGMENTATION_DIR="..."
    ```
    (e.g. /Users/jenaalsup/Desktop/segmentation-testing)
    
-3. Run the ellipse analysis
+4. Run the ellipse analysis
    ```
    python3 fit-ellipsoids.py
    ```
 
-Note: the output is a csv file with one row each lumen and columns representing the parameters for both the inner and outer ellipse
+Note: the output is a csv file with one row each lumen and columns representing the parameters for both the inner and outer ellipsoid
    
 ---
 ## [deprecated] Outer lumen wall segmentation (with thresholding) - alternative to Napari
