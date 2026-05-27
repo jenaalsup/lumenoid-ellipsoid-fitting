@@ -43,7 +43,7 @@ csv_file = f"{_base_name}_results.csv" # output file derived from input director
 voxel_size_um = np.array([0.568, 0.455, 0.455], dtype=float)
 
 # The number of smoothing iterations to apply to the mesh. Larger numbers will be more smooth, but may distort the geometry.
-n_smoothing_iterations = 100 # 750 - 800 was used
+n_smoothing_iterations = 10 # 750 - 800 was used
 
 # -1 if experiment had no control, 0 if it is the treatment group from the experiment, 1 if it is control in the experiment
 control = -1
@@ -158,7 +158,8 @@ def create_individual_binary_stacks(folder_path, output_folder=None, view_binary
                 plt.axis('off')
                 plt.show()
         
-        processed_stacks.append(binary_stack)
+        #processed_stacks.append(binary_stack)
+        processed_stacks.append((binary_stack, filename))
         
         # Save individual stacks if output folder specified
         if output_folder:
@@ -542,7 +543,7 @@ for file in output_folders:
     individual_stacks = create_individual_binary_stacks(folder, view_binary_images=view_binary_images)
     total_images += len(individual_stacks)
 
-    for entity in individual_stacks:
+    for entity, filename in individual_stacks:
         composite = entity
         final_slices = []
             
@@ -582,7 +583,7 @@ for file in output_folders:
         ])
         
         object_z_stacks.append(object_z_stack_with_black)
-        object_source_names.append(file)
+        object_source_names.append(filename)
 
 print('Number of images:', total_images)
 
@@ -684,25 +685,34 @@ for obj_idx, object_z_stack in enumerate(object_z_stacks):
     lumenoid_df.loc[objects_processed,'b_inner_ellipsoid'] = i_radii_opt[1]
     lumenoid_df.loc[objects_processed,'c_inner_ellipsoid'] = i_radii_opt[2]
 
-    # Quantify the quality of fit by the Intersection over Union score
-    outer_mesh_pv = pv.wrap(outer_mesh).triangulate().clean()
-    outer_ellipsoid_pv = pv.wrap(o_ellipsoid_opt).triangulate().clean()
-    intersection = outer_mesh_pv.boolean_intersection(outer_ellipsoid_pv)
-    union = outer_mesh_pv.boolean_union(outer_ellipsoid_pv)
-    vol_intersection = intersection.volume
-    vol_union = union.volume
-    iou_outer_mesh = (vol_intersection / vol_union) if vol_union > 0 else 0.0
-    lumenoid_df.loc[objects_processed,'iou_outer_mesh'] = iou_outer_mesh
-    print("IoU of outer mesh:", iou_outer_mesh)
+    # IoU calculation using filled volumes
+    try:
+        pitch = min(voxel_size_um)
+        # voxelize + fill interiors
+        outer_vox = outer_mesh.voxelized(pitch).fill()
+        outer_ellipsoid_vox = o_ellipsoid_opt.voxelized(pitch).fill()
+        inner_vox = inner_mesh.voxelized(pitch).fill()
+        inner_ellipsoid_vox = i_ellipsoid_opt.voxelized(pitch).fill()
 
-    inner_mesh_pv = pv.wrap(inner_mesh).triangulate().clean()
-    inner_ellipsoid_pv = pv.wrap(i_ellipsoid_opt).triangulate().clean()
-    intersection = inner_mesh_pv.boolean_intersection(inner_ellipsoid_pv)
-    union = inner_mesh_pv.boolean_union(inner_ellipsoid_pv)
-    vol_intersection = intersection.volume
-    vol_union = union.volume
-    iou_inner_mesh = (vol_intersection / vol_union) if vol_union > 0 else 0.0
+        # convert voxel centers to sets
+        outer_pts = set(map(tuple, np.round(outer_vox.points, 2)))
+        outer_ellipsoid_pts = set(map(tuple, np.round(outer_ellipsoid_vox.points, 2)))
+        inner_pts = set(map(tuple, np.round(inner_vox.points, 2)))
+        inner_ellipsoid_pts = set(map(tuple, np.round(inner_ellipsoid_vox.points, 2)))
+
+        # IoU
+        iou_outer_mesh = len(outer_pts & outer_ellipsoid_pts) / len(outer_pts | outer_ellipsoid_pts)
+        iou_inner_mesh = len(inner_pts & inner_ellipsoid_pts) / len(inner_pts | inner_ellipsoid_pts)
+
+    except Exception as e:
+        print("IoU calculation failed:", e)
+        iou_outer_mesh = np.nan
+        iou_inner_mesh = np.nan
+
+    lumenoid_df.loc[objects_processed,'iou_outer_mesh'] = iou_outer_mesh
     lumenoid_df.loc[objects_processed,'iou_inner_mesh'] = iou_inner_mesh
+
+    print("IoU of outer mesh:", iou_outer_mesh)
     print("IoU of inner mesh:", iou_inner_mesh)
 
     objects_processed += 1
