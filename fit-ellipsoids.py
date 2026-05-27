@@ -685,6 +685,20 @@ for obj_idx, object_z_stack in enumerate(object_z_stacks):
     lumenoid_df.loc[objects_processed,'b_inner_ellipsoid'] = i_radii_opt[1]
     lumenoid_df.loc[objects_processed,'c_inner_ellipsoid'] = i_radii_opt[2]
 
+    # Ellipsoid volumes (4/3 pi a b c) and lumen volume-equivalent sphere radius
+    lumenoid_df.loc[objects_processed,'v_outer_ellipsoid'] = (4.0/3.0) * np.pi * o_radii_opt[0] * o_radii_opt[1] * o_radii_opt[2]
+    lumenoid_df.loc[objects_processed,'v_inner_ellipsoid'] = (4.0/3.0) * np.pi * i_radii_opt[0] * i_radii_opt[1] * i_radii_opt[2]
+    lumenoid_df.loc[objects_processed,'lumen_radius_cubic'] = ((3.0 * inner_mesh.volume) / (4.0 * np.pi)) ** (1.0/3.0)
+
+    # Cross-sectional shape index alpha = |x - y| / sqrt(x y) on the most-circular
+    # principal cross-section of the inner ellipsoid (the closest pair of semi-axes)
+    _a, _b, _c = sorted(i_radii_opt)
+    lumenoid_df.loc[objects_processed,'most_similar_lumen_axis_value'] = min(
+        abs(_a - _b) / np.sqrt(_a * _b),
+        abs(_b - _c) / np.sqrt(_b * _c),
+        abs(_a - _c) / np.sqrt(_a * _c),
+    )
+
     # IoU calculation using filled volumes
     try:
         pitch = min(voxel_size_um)
