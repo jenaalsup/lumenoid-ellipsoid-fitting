@@ -78,6 +78,7 @@ The setup and workflow are the same as the Inner cavity segmentation section, wi
    ```
 
 Note: the output is a csv file with one row each lumen and columns representing the parameters for both the inner and outer ellipsoid
+Note: set view_result to true to turn on rendering of a 3D visualization of the fitted model to the lumenoid
    
 ## Analysis
 1. Move day 2, day 3, day 4 CSV outputs of fit-ellipsoids.py into a folder (some example data is stored at fake_data in this repository)
